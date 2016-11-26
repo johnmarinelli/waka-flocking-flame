@@ -10,11 +10,11 @@ using namespace ci::app;
 using namespace std;
 
 class WakaFlockingFlameApp : public App {
-public:
-  void setup() override;
-  void mouseDown( MouseEvent event ) override;
-  void update() override;
-  void draw() override;
+  public:
+	void setup() override;
+	void mouseDown( MouseEvent event ) override;
+	void update() override;
+	void draw() override;
   
   CameraPersp mCamera;
   
@@ -34,15 +34,14 @@ std::vector<glm::vec3> WakaFlockingFlameApp::getParticlePositions() const {
   return positions;
 }
 
-const float PARTICLE_NEARBY_THRESHOLD = 16.f;
+const float PARTICLE_NEARBY_THRESHOLD = 10.f;
 
 std::vector<Particle> WakaFlockingFlameApp::getNearbyParticles(const Particle& p1) const {
   std::vector<Particle> particles;
   
   std::for_each(mParticles.begin(), mParticles.end(), [&p1, &particles] (const Particle& p2) {
-    auto dis = distance(p1.mLocation, p2.mLocation);
-
-    if (dis > 0.f && dis < PARTICLE_NEARBY_THRESHOLD) {
+    auto dis = dot(p1.mLocation, p2.mLocation);
+    if (dis > 0 && dis < PARTICLE_NEARBY_THRESHOLD) {
       particles.push_back(p2);
     }
   });
@@ -57,12 +56,12 @@ void WakaFlockingFlameApp::setup()
   
   mCamera.lookAt(glm::vec3{3,2,-10}, glm::vec3{0});
   
-  int numParticles = 250;
+  int numParticles = 100;
   auto rand = ci::Rand{};
   
   for (int i = 0; i < numParticles; ++i) {
-    auto x = rand.nextFloat(25.f);
-    auto y = rand.nextFloat(25.f);
+    auto x = rand.nextFloat();
+    auto y = rand.nextFloat();
     auto z = rand.nextFloat();
     mParticles.push_back(Particle{glm::vec3{x,y,z}});
   }
@@ -75,21 +74,9 @@ void WakaFlockingFlameApp::mouseDown( MouseEvent event )
 void WakaFlockingFlameApp::update()
 {
   std::for_each(mParticles.begin(), mParticles.end(), [this] (Particle& p) {
-    auto neighbors = getNearbyParticles(p);
-    p.update(neighbors);
+    auto nearby = getNearbyParticles(p);
+    p.update();
   });
-  
-  auto positions = getParticlePositions();
-  glm::vec3 mean{0};
-  
-  for (const auto& p : positions) {
-    mean += p;
-  }
-
-  mean /= float(positions.size());
-  auto newMean = limitVec3(mean, 10.f);
-  
-  mCamera.lookAt(glm::vec3{3,2,-10}, newMean);
 }
 
 void WakaFlockingFlameApp::draw()
